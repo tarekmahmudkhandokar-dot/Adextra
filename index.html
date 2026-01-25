@@ -2,75 +2,91 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>PP Coin - Watch Ads</title>
 
+<!-- Telegram WebApp -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<!-- ✅ REAL AdExtra Script (ONLY ONCE) -->
+<!-- ✅ REAL AdExtra Script (ORIGINAL) -->
 <script async src="https://partner.adextra.io/jt/fbcbc5db7d4d1a01fa6db0b51a1c936e815b1c23.js"></script>
 
 <style>
-body,html{
-margin:0;
-padding:0;
-height:100%;
-background:#000;
-color:#fff;
-font-family:sans-serif;
+/* 🔒 Full screen fixed, no scroll */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;          /* 🔥 scroll বন্ধ */
+    background: #000;
+    color: #fff;
+    font-family: sans-serif;
 }
-#main{
-height:100%;
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
+
+/* Main UI */
+#main {
+    position: relative;
+    z-index: 2;                /* UI উপরে থাকবে */
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
 }
-#watch-btn{
-padding:20px 60px;
-font-size:22px;
-border-radius:50px;
-border:none;
-background:linear-gradient(45deg,#ff416c,#ff4b2b);
-color:#fff;
-font-weight:bold;
+
+/* Button */
+#watch-btn {
+    padding: 20px 60px;
+    font-size: 22px;
+    border-radius: 50px;
+    border: none;
+    background: linear-gradient(45deg, #ff416c, #ff4b2b);
+    color: #fff;
+    font-weight: bold;
 }
-#ad-fullscreen{
-position:fixed;
-inset:0;
-background:#000;
-z-index:9999;
-display:none;
-}
-#ad-fullscreen.show{
-display:block;
+
+/* Ad container fixed fullscreen */
+#ad-box {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1;                /* ad নিচে, UI উপরে */
 }
 </style>
 </head>
 
 <body>
 
+<!-- UI -->
 <div id="main">
-<h1>PP Coin</h1>
-<p id="user"></p>
-<button id="watch-btn">Watch Ad</button>
+    <h1>PP Coin</h1>
+    <button id="watch-btn">Watch Ad</button>
 </div>
 
-<!-- ✅ AdExtra Container -->
-<div id="ad-fullscreen">
-    <div id="fbcbc5db7d4d1a01fa6db0b51a1c936e815b1c23" style="width:100%;height:100%"></div>
+<!-- ✅ AdExtra ORIGINAL CONTAINER (DO NOT HIDE) -->
+<div id="ad-box">
+    <div id="fbcbc5db7d4d1a01fa6db0b51a1c936e815b1c23"
+         style="width:100%; height:100%;">
+    </div>
 </div>
 
 <script>
+/* Telegram setup */
 Telegram.WebApp.ready();
 Telegram.WebApp.expand();
 
-const user = Telegram.WebApp.initDataUnsafe.user || {};
-document.getElementById("user").innerText =
-user.username ? "@"+user.username : "Guest";
-
+/*
+IMPORTANT:
+AdExtra নিজে থেকেই REAL ad load করে।
+Button শুধু user interaction হিসেবে কাজ করে।
+*/
 document.getElementById("watch-btn").onclick = () => {
-    document.getElementById("ad-fullscreen").classList.add("show");
+    console.log("User clicked Watch Ad");
 };
 </script>
 
