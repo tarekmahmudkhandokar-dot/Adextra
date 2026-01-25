@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PP Coin - Watch Ads</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <!-- তোমার অরিজিনাল AdExtra স্ক্রিপ্ট -->
+    <script async src="https://partner.adextra.io/jt/fbcbc5db7d4d1a01fa6db0b51a1c936e815b1c23.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            touch-action: manipulation;
+        }
+        #main-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+        }
+        h1 {
+            font-size: 4em;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px gold;
+        }
+        #user-info {
+            font-size: 1.4em;
+            margin-bottom: 40px;
+        }
+        #watch-btn {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            color: white;
+            border: none;
+            padding: 25px 100px;
+            font-size: 2.2em;
+            font-weight: bold;
+            border-radius: 80px;
+            cursor: pointer;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.7);
+            transition: all 0.3s;
+        }
+        #watch-btn:active {
+            transform: scale(0.92);
+        }
+        #ad-fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+            background: rgba(0,0,0,0.95);
+            display: none;
+        }
+        #ad-fullscreen.show {
+            display: block;
+        }
+        #fbcbc5db7d4d1a01fa6db0b51a1c936e815b1c23 {
+            width: 100%;
+            height: 100%;
+        }
+        #close-ad {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.3);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.4em;
+            border-radius: 50px;
+            cursor: pointer;
+            z-index: 10000;
+        }
+    </style>
+</head>
+<body>
+    <div id="main-content">
+        <h1>PP Coin</h1>
+        <div id="user-info">
+            <p>Username: <span id="username">Loading...</span></p>
+            <p>ID: <span id="user-id">Loading...</span></p>
+        </div>
+        <button id="watch-btn">Watch Ads</button>
+    </div>
+
+    <!-- অরিজিনাল AdExtra অ্যাড এখানে ফুল স্ক্রিনে চালু হবে -->
+    <div id="ad-fullscreen">
+        <button id="close-ad">Close</button>
+        <div id="fbcbc5db7d4d1a01fa6db0b51a1c936e815b1c23"></div>
+    </div>
+
+    <script>
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+
+        const user = Telegram.WebApp.initDataUnsafe.user || {};
+        document.getElementById('username').textContent = user.username || 'Guest';
+        document.getElementById('user-id').textContent = user.id || 'N/A';
+
+        const watchBtn = document.getElementById('watch-btn');
+        const adFullscreen = document.getElementById('ad-fullscreen');
+        const closeAd = document.getElementById('close-ad');
+
+        watchBtn.addEventListener('click', () => {
+            adFullscreen.classList.add('show');
+            // AdExtra অ্যাড অটো লোড হবে এবং full-screen হয়ে যাবে
+        });
+
+        closeAd.addEventListener('click', () => {
+            adFullscreen.classList.remove('show');
+        });
+    </script>
+</body>
+</html>
