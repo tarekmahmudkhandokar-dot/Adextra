@@ -1,94 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>PP Coin - Watch Ads</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PP Coin – Adexora Rewarded Ad (ID: 1884)</title>
 
-<!-- Telegram WebApp -->
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Telegram Web App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-<!-- ✅ REAL AdExtra Script (ORIGINAL) -->
-<script async src="https://partner.adextra.io/jt/fbcbc5db7d4d1a01fa6db0b51a1c936e815b1c23.js"></script>
+  <!-- Adexora SDK with your App ID 1884 -->
+  <script src="https://adexora.com/cdn/ads.js?id=1884" async></script>
 
-<style>
-/* 🔒 Full screen fixed, no scroll */
-html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;          /* 🔥 scroll বন্ধ */
-    background: #000;
-    color: #fff;
-    font-family: sans-serif;
-}
-
-/* Main UI */
-#main {
-    position: relative;
-    z-index: 2;                /* UI উপরে থাকবে */
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 20px;
-}
-
-/* Button */
-#watch-btn {
-    padding: 20px 60px;
-    font-size: 22px;
-    border-radius: 50px;
-    border: none;
-    background: linear-gradient(45deg, #ff416c, #ff4b2b);
-    color: #fff;
-    font-weight: bold;
-}
-
-/* Ad container fixed fullscreen */
-#ad-box {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 1;                /* ad নিচে, UI উপরে */
-}
-</style>
+  <style>
+    body {
+      background: #0f172a;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+      margin: 0;
+    }
+    .card {
+      background: #020617;
+      border-radius: 14px;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 400px;
+    }
+    button {
+      background: #22c55e;
+      color: #000;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      margin: 10px;
+    }
+    button:active { opacity: 0.85; }
+    #status {
+      margin-top: 20px;
+      font-size: 16px;
+      color: #fbbf24;
+    }
+  </style>
 </head>
-
 <body>
 
-<!-- UI -->
-<div id="main">
-    <h1>PP Coin</h1>
-    <button id="watch-btn">Watch Ad</button>
-</div>
+  <div class="card">
+    <h2>Adexora Rewarded Ad (App ID: 1884)</h2>
+    <p>Watch full ad → Earn +100 PP Coin (or your reward)</p>
 
-<!-- ✅ AdExtra ORIGINAL CONTAINER (DO NOT HIDE) -->
-<div id="ad-box">
-    <div id="fbcbc5db7d4d1a01fa6db0b51a1c936e815b1c23"
-         style="width:100%; height:100%;">
-    </div>
-</div>
+    <button onclick="showAdexoraAd()">Watch Ad & Get Reward</button>
 
-<script>
-/* Telegram setup */
-Telegram.WebApp.ready();
-Telegram.WebApp.expand();
+    <div id="status">Ready to show ad...</div>
+  </div>
 
-/*
-IMPORTANT:
-AdExtra নিজে থেকেই REAL ad load করে।
-Button শুধু user interaction হিসেবে কাজ করে।
-*/
-document.getElementById("watch-btn").onclick = () => {
-    console.log("User clicked Watch Ad");
-};
-</script>
+  <script>
+    // Telegram Mini App initialization
+    document.addEventListener("DOMContentLoaded", () => {
+      if (window.Telegram?.WebApp) {
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+        Telegram.WebApp.enableClosingConfirmation(); // Optional: prevent accidental close
+      }
+    });
+
+    // Function to show Adexora rewarded ad
+    function showAdexoraAd() {
+      const status = document.getElementById("status");
+      status.textContent = "Loading rewarded ad... Please wait.";
+
+      if (typeof window.showAdexora !== "function") {
+        status.textContent = "Adexora SDK not loaded. Refresh or check connection.";
+        console.error("Adexora SDK not ready");
+        return;
+      }
+
+      window.showAdexora()
+        .then(() => {
+          // Ad successfully completed → Grant reward
+          status.textContent = "Ad watched successfully! +100 PP Coin added 🎉";
+          console.log("Reward granted!");
+
+          // তোমার actual logic এখানে যোগ করো
+          // Example: addUserCoins(100); updateBalanceDisplay(); showToast("Coins added!");
+          // অথবা backend API call: fetch('/api/reward', { method: 'POST', body: JSON.stringify({ userId: Telegram.WebApp.initDataUnsafe.user.id, amount: 100 }) });
+        })
+        .catch(error => {
+          // Ad failed, skipped, or error
+          status.textContent = "Ad not completed or error occurred. No reward.";
+          console.error("Adexora ad error:", error);
+        });
+    }
+  </script>
 
 </body>
 </html>
