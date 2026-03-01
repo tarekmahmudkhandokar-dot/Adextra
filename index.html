@@ -57,7 +57,24 @@
     </style>
 </head>
 <body class="max-w-md mx-auto min-h-screen pb-24 text-slate-200">
+<div id="loading-screen" class="fixed inset-0 bg-[#0a0f1d] z-[9999] flex flex-col items-center justify-center">
+    <div class="w-16 h-16 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+    <p class="mt-4 text-blue-400 font-bold tracking-widest animate-pulse text-[10px]">VERIFYING SESSION...</p>
+</div>
 
+<div id="modal-join-check" class="fixed inset-0 bg-[#0a0f1d] z-[9998] hidden flex flex-col items-center justify-center p-6 text-center">
+    <div class="glass p-8 rounded-3xl border border-blue-500/20 max-w-xs w-full shadow-2xl">
+        <div class="w-20 h-20 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg class="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+        </div>
+        <h2 class="text-xl font-black text-white mb-2 uppercase italic">Access Denied</h2>
+        <p class="text-xs text-slate-400 mb-8 leading-relaxed">Join our official channel to unlock the mining features and withdrawals.</p>
+        
+        <a href="https://t.me/PPCoinChannel" target="_blank" class="block w-full bg-blue-600 py-4 rounded-2xl font-bold text-xs mb-3 shadow-lg shadow-blue-500/30 active:scale-95 transition-transform uppercase">Join Channel</a>
+        
+        <button onclick="checkMembershipManual()" id="btn-verify-main" class="w-full bg-white/5 py-4 rounded-2xl font-bold text-xs border border-white/5 text-slate-300 uppercase">Check Membership</button>
+    </div>
+</div>
     <header class="p-4 flex justify-between items-start sticky top-0 z-50 glass rounded-b-2xl">
         <div class="flex items-center gap-3">
             <div id="user-photo-container" class="w-10 h-10 bg-slate-700 rounded-full border border-blue-500 overflow-hidden">
