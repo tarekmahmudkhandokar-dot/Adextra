@@ -115,6 +115,59 @@ async function init() {
     updateUI();
     // এখান থেকে loadLeaderboard(), loadTasks() এবং window.loadWithdrawHistory() সরিয়ে ফেলা হয়েছে (Read কমানোর জন্য)।
 }
+// ১. মেম্বারশিপ চেক করার নিরাপদ ফাংশন
+async function checkUserMembership() {
+    try {
+        // নেটিলিফাই ফাংশনকে রিকোয়েস্ট পাঠানো
+        const response = await fetch('/.netlify/functions/check-membership', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentUser.id })
+        });
+
+        const result = await response.json();
+
+        if (result.joined) {
+            // যদি জয়েন করে থাকে
+            document.getElementById('modal-join-check').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            document.getElementById('main-app').style.display = 'block';
+        } else {
+            // জয়েন না করলে
+            document.getElementById('modal-join-check').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('hidden');
+        }
+    } catch (e) {
+        console.error("Verification Error:", e);
+        // এরর হলে সেফটি হিসেবে অ্যাপ ওপেন করে দেওয়া ভালো
+        document.getElementById('main-app').style.display = 'block';
+    } finally {
+        // লোডিং স্ক্রিন বন্ধ করা
+        document.getElementById('loading-screen').classList.add('hidden');
+    }
+}
+
+// ২. ম্যানুয়াল চেক বাটন
+window.checkMembershipManual = async () => {
+    const btn = document.getElementById('btn-verify-main');
+    const originalText = btn.innerText;
+    btn.innerText = "VERIFYING...";
+    btn.disabled = true;
+
+    await checkUserMembership();
+
+    if (!document.getElementById('modal-join-check').classList.contains('hidden')) {
+        alert("❌ Membership not found! Please join the channel first.");
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+};
+
+// ৩. আপনার init() ফাংশনের শেষে এটি কল করুন
+// function init() {
+//    ... আগের কোড ...
+//    checkUserMembership(); 
+// }
 // --- অ্যাড কুলডাউন চেক ---
 function checkSpecificAdCooldown(type) {
     const now = Date.now();
