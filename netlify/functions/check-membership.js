@@ -8,7 +8,7 @@ exports.handler = async (event) => {
 
     try {
         const { userId } = JSON.parse(event.body);
-        const BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"; // আপনার বট টোকেন দিন
+        const BOT_TOKEN = "8590803835:AAFog4rd2J1fVv6ldq5sfjpXF9U_u6j4qoE"; // আপনার বট টোকেন দিন
         const CHANNEL_ID = "@PPCoinChannel";
 
         const url = `https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=${CHANNEL_ID}&user_id=${userId}`;
