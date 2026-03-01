@@ -1,6 +1,9 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, collection, query, orderBy, limit, getDocs, addDoc, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
-
+import { 
+    getFirestore, doc, getDoc, setDoc, updateDoc, increment, 
+    collection, query, orderBy, limit, getDocs, addDoc, 
+    where, serverTimestamp, arrayUnion 
+} from "https://www.gstatic.com/firebasejs/12.7.0/firebase-firestore.js";
 // --- ফায়ারবেস কনফিগারেশন ---
 const firebaseConfig = {
     apiKey: "AIzaSyAD0iYQhYwUWdssGzYFHR9kbP1ZQTlsm80",
@@ -27,7 +30,7 @@ let miningTimer = null;
 let selectedWithdrawAmount = 0;
 let adCooldownMinutes = 5; 
 
-// --- আপনার দেওয়া নতুন অ্যাপ শুরুর ইনিশিয়ালাইজেশন ফাংশন (আপডেটেড) ---
+// --- আপনার দেওয়া নতুন অ্যাপ শুরুর ইনিশিয়ালাইজেশন ফাংশন (সম্পূর্ণ আপডেটেড) ---
 async function init() {
     const tgUser = tg.initDataUnsafe?.user;
     currentUser.id = tgUser ? tgUser.id.toString() : "99999";
@@ -53,8 +56,10 @@ async function init() {
 
     if (snap.exists()) {
         currentUser = { ...currentUser, ...snap.data() };
+        // --- লোকাল স্টোরেজে ডাটা সেভ রাখা (নতুন যুক্ত করা হয়েছে) ---
+        localStorage.setItem('cached_user', JSON.stringify(currentUser));
     } else {
-        // ২. নতুন ইউজার ডাটাবেজ তৈরি (Updated with Store Fields)
+        // ২. নতুন ইউজার ডাটাবেজ তৈরি
         const newUser = {
             id: currentUser.id,
             name: currentUser.name,
@@ -63,16 +68,13 @@ async function init() {
             total_ref_earnings: 0,
             referral_count: 0,
             referredBy: (referrerId && referrerId !== currentUser.id) ? referrerId : null,
-            referralRewarded: false, // বোনাস একবার দেওয়ার জন্য লক
+            referralRewarded: false,
             lastBonus: 0,
             bonusDay: 0,
             miningStartTime: 0,
-            
-            // --- স্টোর প্যাকেজের জন্য নতুন ফিল্ড ---
-            isMining2x: false,        // বুস্ট কেনা আছে কি না
-            isVerified: false,        // ভেরিফাইড কি না
-            mining2xExpiry: 0,        // বুস্টের মেয়াদ শেষ হওয়ার সময়
-            
+            isMining2x: false,
+            isVerified: false,
+            mining2xExpiry: 0,
             createdAt: serverTimestamp(),
             lastAdTime_adsgram: 0, 
             lastAdTime_monetag: 0, 
@@ -83,7 +85,7 @@ async function init() {
         await setDoc(userRef, newUser);
         currentUser = newUser;
 
-        // ৩. রেফারারকে বোনাস প্রদান (Registration সময় একবারই হবে)
+        // ৩. রেফারারকে বোনাস প্রদান (২০০ পিপি)
         if (newUser.referredBy && !newUser.referralRewarded) {
             const refRef = doc(db, "users", newUser.referredBy);
             const refSnap = await getDoc(refRef);
@@ -91,16 +93,17 @@ async function init() {
             if (refSnap.exists()) {
                 await updateDoc(refRef, { 
                     referral_count: increment(1), 
-                    total_ref_earnings: increment(200), // ২০০ পিপি বোনাস
+                    total_ref_earnings: increment(200), 
                     pp: increment(200) 
                 });
-                // বোনাস দেওয়া হয়েছে নিশ্চিত করতে ইউজারের প্রোফাইল আপডেট
                 await updateDoc(userRef, { referralRewarded: true });
             }
         }
+        // নতুন ইউজারের ডাটাও লোকাল স্টোরেজে রাখা
+        localStorage.setItem('cached_user', JSON.stringify(currentUser));
     }
 
-    // ৪. রেফারেল লিঙ্ক জেনারেট করা (সঠিক ফরম্যাট: startapp=r_ID)
+    // ৪. রেফারেল লিঙ্ক জেনারেট করা
     const refLinkElement = document.getElementById('ref-link');
     if (refLinkElement) {
         refLinkElement.value = `https://t.me/PPCoin_bot/app?startapp=r_${currentUser.id}`;
@@ -110,11 +113,8 @@ async function init() {
     ['adsgram', 'monetag', 'adexora', 'adexium'].forEach(type => checkSpecificAdCooldown(type));
     
     updateUI();
-    loadLeaderboard();
-    loadTasks();
-    window.loadWithdrawHistory();
+    // এখান থেকে loadLeaderboard(), loadTasks() এবং window.loadWithdrawHistory() সরিয়ে ফেলা হয়েছে (Read কমানোর জন্য)।
 }
-
 // --- অ্যাড কুলডাউন চেক ---
 function checkSpecificAdCooldown(type) {
     const now = Date.now();
@@ -422,42 +422,6 @@ async function processTask(amount, adType) {
     alert("Reward Added!");
 }
 
-// --- অ্যাড টাস্ক ফর্ম ওপেন ---
-window.openAdTaskForm = () => document.getElementById('modal-adtask').classList.remove('hidden');
-
-// --- অ্যাড টাস্ক জমা দেওয়া ---
-window.submitAdTask = async () => {
-    const name = document.getElementById('ad-name').value;
-    const link = document.getElementById('ad-link').value;
-    const target = document.getElementById('ad-target').value;
-    const costs = { "100": 1.00, "500": 4.50, "1000": 8.00 };
-    const cost = costs[target];
-    if (currentUser.usdt < cost) return alert("Insufficient USDT Balance!");
-    if (!name || !link) return alert("Fill all fields!");
-    await updateDoc(doc(db, "users", currentUser.id), { usdt: increment(-cost) });
-    await addDoc(collection(db, "tasks"), {
-        name, link, target: parseInt(target), completedCount: 0,
-        creatorId: currentUser.id, status: "pending", createdAt: Date.now()
-    });
-    currentUser.usdt -= cost; 
-    updateUI(); 
-    closeModal('modal-adtask'); 
-    alert("Task submitted for approval!");
-    loadTasks();
-};
-
-// --- ইউজারের টাস্ক লোড ---
-async function loadTasks() {
-    const myQ = query(collection(db, "tasks"), where("creatorId", "==", currentUser.id));
-    const mySnap = await getDocs(myQ);
-    let myHtml = '';
-    mySnap.forEach(docSnap => {
-        const task = docSnap.data();
-        const statusBadge = `<span class="status-badge status-${task.status}">${task.status}</span>`;
-        myHtml += `<div class="glass p-3 rounded-xl text-[10px]"><div class="flex justify-between mb-1 font-bold"><span>${task.name}</span>${statusBadge}</div></div>`;
-    });
-    document.getElementById('my-tasks-list').innerHTML = myHtml || '<p class="text-[10px] text-slate-600 italic">No tasks created.</p>';
-}
 
 // --- মডাল ওপেন ---
 window.openModal = (id) => document.getElementById(id).classList.remove('hidden');
@@ -477,7 +441,58 @@ window.submitDeposit = async () => {
         closeModal('modal-deposit');
     } catch (e) { alert("Error!"); }
 };
+// --- টেলিগ্রাম টাস্ক লোড করা ---
+async function loadAvailableTasks() {
+    const taskList = document.getElementById('available-tasks-list');
+    if (!taskList) return;
 
+    taskList.innerHTML = '<p class="text-[10px] text-center text-slate-500 py-4 animate-pulse">FETCHING MISSIONS...</p>';
+
+    try {
+        // ১. শুধুমাত্র active=true এবং approved=true টাস্কগুলো আনা হবে
+        const q = query(collection(db, "tasks"), 
+                        where("active", "==", true), 
+                        where("approved", "==", true), 
+                        limit(20));
+        const snap = await getDocs(q);
+
+        let html = '';
+        
+        if (snap.empty) {
+            taskList.innerHTML = '<p class="text-[10px] text-center text-slate-600 py-4 italic">No missions available right now.</p>';
+            return;
+        }
+
+        snap.forEach(docSnap => {
+            const task = docSnap.data();
+            const taskId = docSnap.id;
+            
+            // চেক করা হচ্ছে ইউজার কি অলরেডি এই টাস্কটি করেছে?
+            // নোট: Firebase-এ 'completedBy' অ্যারে থাকলে রিড ফিল্টার সহজ হয়।
+            const alreadyDone = task.completedBy && task.completedBy.includes(currentUser.id);
+
+            if (!alreadyDone) {
+                html += `
+                <div class="glass p-4 rounded-xl flex justify-between items-center border border-white/5 mb-2">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-400 font-bold text-[10px]">TG</div>
+                        <div>
+                            <p class="text-sm font-bold truncate w-32">${task.channelName}</p>
+                            <p class="text-[10px] text-green-500 font-bold">+${task.reward} PP COIN</p>
+                        </div>
+                    </div>
+                    <button id="task-btn-${taskId}" onclick="handleTelegramTask('${task.channelLink}', '${taskId}', ${task.reward}, this)" class="bg-blue-600 px-4 py-2 rounded-lg text-[10px] font-bold uppercase shadow-lg shadow-blue-500/20">Join</button>
+                </div>`;
+            }
+        });
+
+        taskList.innerHTML = html || '<p class="text-[10px] text-center text-slate-600 py-4">All missions completed!</p>';
+
+    } catch (e) {
+        console.error("Task Loading Error:", e);
+        taskList.innerHTML = '<p class="text-xs text-red-500 text-center">Error loading tasks.</p>';
+    }
+}
 // --- উইথড্র অ্যামাউন্ট সিলেকশন ---
 window.selectWithdraw = (amt, btnElement) => {
     selectedWithdrawAmount = amt;
@@ -596,7 +611,7 @@ if ((currentUser.referral_count || 0) >= 30 || currentUser.isVerified) {
 }
 }
 
-// --- ট্যাব সুইচিং (সম্পূর্ণ আপডেট করা কোড) ---
+// --- ট্যাব সুইচিং (স্মার্ট লোডিং ভার্সন) ---
 window.switchTab = (tab, el) => {
     // ১. সব পেজ আগে লুকিয়ে ফেলুন
     document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
@@ -610,18 +625,23 @@ window.switchTab = (tab, el) => {
         targetPage.classList.remove('hidden');
     }
 
-    // ৪. নেভিগেশন আইকন হাইলাইট করার লজিক
+    // --- ৪. স্মার্ট লোডিং (ট্যাবে ক্লিক করলেই কেবল রিড হবে) ---
+    if (tab === 'leaderboard') {
+        loadLeaderboard(); 
+    } else if (tab === 'tasks') {
+        loadAvailableTasks(); 
+    } else if (tab === 'profile') {
+        window.loadWithdrawHistory(); 
+    }
+
+    // ৫. নেভিগেশন আইকন হাইলাইট করার লজিক
     if (el) {
-        // যদি সরাসরি নেভিগেশন বার থেকে ক্লিক করা হয়
         el.classList.add('active');
     } else {
-        // যদি হোমপেজের স্টোর বাটন বা অন্য কোথাও থেকে ক্লিক করা হয়,
-        // তবে নিচের বারের সঠিক আইকনটি খুঁজে বের করে সেটাকে নীল (Active) করবে।
         const navBtn = document.querySelector(`.nav-btn[onclick*="'${tab}'"]`);
         if (navBtn) navBtn.classList.add('active');
     }
     
-    // ৫. টেলিগ্রাম ভাইব্রেশন ফিডব্যাক
     if (window.Telegram?.WebApp?.HapticFeedback) {
         tg.HapticFeedback.impactOccurred('light');
     }
@@ -645,8 +665,8 @@ window.shareLink = () => {
 
 // --- লিডারবোর্ড ফাংশন (রেফারেল অনুযায়ী সাজানো এবং হাইলাইট করা) ---
 async function loadLeaderboard() {
-    // ১. ডাটাবেজ থেকে সর্বোচ্চ রেফারেল করা ১০০ জনকে নিয়ে আসা
-    const q = query(collection(db, "users"), orderBy("referral_count", "desc"), limit(100));
+    // ১. ডাটাবেজ থেকে সর্বোচ্চ রেফারেল করা ১০ জনকে নিয়ে আসা
+    const q = query(collection(db, "users"), orderBy("referral_count", "desc"), limit(10));
     const snap = await getDocs(q);
     
     let html = '';
@@ -666,7 +686,7 @@ async function loadLeaderboard() {
         }
 
         // ৩. প্রধান লিস্টে সেরা ১০ জনকে দেখানো
-        if (i < 20) {
+        if (i < 10) {
             // র‍্যাঙ্ক নাম্বার বা মেডেল লজিক
             let rankDisplay = `#${i + 1}`;
             if (i === 0) rankDisplay = "🥇";
@@ -762,6 +782,139 @@ window.buyUpgrade = async (plan) => {
     } catch (e) {
         console.error("Purchase Error:", e);
         alert("Something went wrong. Try again.");
+    }
+};// --- টাস্ক হ্যান্ডলিং (Join & Bot Verify) ---
+window.handleTelegramTask = async (link, taskId, reward, btn) => {
+    // আপনার বট টোকেন এবং চ্যানেলের তথ্য এখানে লাগবে
+    // নোট: সিকিউরিটির জন্য এগুলো ব্যাকএন্ডে রাখা ভালো, তবে ফ্রন্টএন্ডে এভাবে কাজ চালানো যায়
+    const BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"; // আপনার বটের টোকেন এখানে দিন
+
+    if (btn.innerText === "JOIN") {
+        tg.openTelegramLink(link);
+        btn.innerText = "VERIFY";
+        btn.classList.replace('bg-blue-600', 'bg-yellow-600');
+        tg.HapticFeedback.impactOccurred('medium');
+    } 
+    else if (btn.innerText === "VERIFY") {
+        btn.disabled = true;
+        btn.innerText = "CHECKING...";
+
+        try {
+            const taskRef = doc(db, "tasks", taskId);
+            const taskSnap = await getDoc(taskRef);
+            const taskData = taskSnap.data();
+            
+            // ১. ডাটাবেজ থেকে চ্যানেলের Chat ID নেয়া (টাস্ক বানানোর সময় এটি অ্যাডমিন দিবে)
+            const chatId = taskData.chatId; 
+
+            if (!chatId) {
+                alert("Task configuration error: Missing Chat ID.");
+                btn.disabled = false;
+                btn.innerText = "VERIFY";
+                return;
+            }
+
+            // ২. টেলিগ্রাম এপিআই এর মাধ্যমে মেম্বারশিপ চেক করা
+            const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getChatMember?chat_id=${chatId}&user_id=${currentUser.id}`);
+            const result = await response.json();
+
+            // ৩. স্ট্যাটাস চেক (member, administrator, or creator হলে সে জয়েন করেছে)
+            const allowedStatus = ['member', 'administrator', 'creator'];
+            const isJoined = result.ok && allowedStatus.includes(result.result.status);
+
+            if (isJoined) {
+                // অলরেডি লিমিট শেষ কি না চেক
+                if (taskData.currentJoined >= taskData.targetUsers) {
+                    await updateDoc(taskRef, { active: false });
+                    alert("Limit reached!");
+                    loadAvailableTasks();
+                    return;
+                }
+
+                // ৪. ডাটাবেজ আপডেট ও রিওয়ার্ড প্রদান
+                const userRef = doc(db, "users", currentUser.id);
+                await updateDoc(userRef, { pp: increment(reward) });
+                await updateDoc(taskRef, { 
+                    currentJoined: increment(1),
+                    completedBy: arrayUnion(currentUser.id)
+                });
+
+                currentUser.pp += reward;
+                updateUI();
+                
+                btn.innerText = "DONE ✅";
+                btn.classList.replace('bg-yellow-600', 'bg-green-600');
+                btn.classList.add('opacity-50');
+                tg.HapticFeedback.notificationOccurred('success');
+                alert("Verified! Reward added.");
+            } else {
+                // ৫. যদি জয়েন না করে থাকে
+                tg.HapticFeedback.notificationOccurred('error');
+                alert("❌ You haven't joined yet! Please join the channel first.");
+                btn.disabled = false;
+                btn.innerText = "VERIFY";
+            }
+        } catch (e) {
+            console.error("Verification Error:", e);
+            alert("Connection error! Try again later.");
+            btn.disabled = false;
+            btn.innerText = "VERIFY";
+        }
+    }
+};
+// --- টেলিগ্রাম সোশ্যাল টাস্ক সাবমিট (USDT Balance কাটবে) ---
+window.submitTelegramTask = async () => {
+    const channelName = document.getElementById('tg-channel-name').value.trim();
+    const channelLink = document.getElementById('tg-channel-link').value.trim();
+    const target = parseInt(document.getElementById('tg-target').value);
+    
+    // প্রতি ১০০ মেম্বারের জন্য ১ USDT খরচ (আপনি চাইলে এখানে রেট পরিবর্তন করতে পারেন)
+    // উদাহরণ: ১০০ টার্গেট = ১ USDT, ৫০০ = ৫ USDT
+    const costs = { 100: 1.00, 500: 4.50, 1000: 8.00 };
+    const totalCost = costs[target] || (target * 0.01); 
+
+    if (!channelName || !channelLink) return alert("Fill all fields!");
+
+    // USDT ব্যালেন্স চেক এবং প্রোফাইল ট্যাবে রিডাইরেক্ট
+    if (currentUser.usdt < totalCost) {
+        alert("Insufficient USDT balance! Please deposit/earn more.");
+        window.switchTab('profile'); // ব্যালেন্স না থাকলে প্রোফাইল/ডিপোজিট পেজে নিয়ে যাবে
+        return;
+    }
+
+    try {
+        await addDoc(collection(db, "tasks"), {
+            channelName: channelName,
+            channelLink: channelLink,
+            targetUsers: target,
+            currentJoined: 0,
+            reward: 100, // যারা জয়েন করবে তারা ১০০ PP পাবে
+            taskType: "social_telegram",
+            createdBy: currentUser.id,
+            active: false,    // অ্যাডমিন এপ্রুভ করার জন্য
+            approved: false,  
+            completedBy: [],
+            createdAt: serverTimestamp()
+        });
+
+        // ইউজারের USDT ব্যালেন্স কাটা
+        await updateDoc(doc(db, "users", currentUser.id), { 
+            usdt: increment(-totalCost) 
+        });
+        
+        currentUser.usdt -= totalCost;
+        updateUI();
+
+        alert("Telegram Mission submitted for Admin approval! Cost: " + totalCost + " USDT");
+        closeModal('modal-create-tg-task');
+        
+        // টাস্ক লিস্ট আপডেট
+        if (typeof loadAvailableTasks === "function") {
+            loadAvailableTasks();
+        }
+    } catch (e) {
+        console.error("Task creation error:", e);
+        alert("Error creating Telegram task.");
     }
 };
 // অ্যাপ শুরু
