@@ -97,3 +97,17 @@ input[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
+.glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+}
+
+#loading-screen {
+    transition: opacity 0.5s ease-out;
+}
+
+#loading-screen.hidden {
+    display: none;
+    opacity: 0;
+}
